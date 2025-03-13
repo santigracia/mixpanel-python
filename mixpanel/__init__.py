@@ -27,7 +27,7 @@ import six
 from six.moves import range
 import urllib3
 
-__version__ = '4.10.1'
+__version__ = '4.10.2'
 VERSION = __version__  # TODO: remove when bumping major version.
 
 logger = logging.getLogger(__name__)
@@ -115,17 +115,20 @@ class Mixpanel(object):
         :param dict properties: additional data to record; keys should be
             strings, and values should be strings, numbers, or booleans
         :param dict meta: overrides Mixpanel special properties
-        :param str api_secret: Your Mixpanel project's API secret.
+        :param str|tuple api_secret: either your Mixpanel project's API secret (str) for legacy auth,
+            or a tuple of (username, password) for service account authentication
 
         .. Important::
-            Mixpanel's ``import`` HTTP endpoint requires the project API
-            secret found in your Mixpanel project's settings. The older API key is
-            no longer accessible in the Mixpanel UI, but will continue to work.
-            The api_key parameter will be removed in an upcoming release of
-            mixpanel-python.
+            Mixpanel's ``import`` HTTP endpoint requires authentication. You can use either:
+            1. The project API secret (legacy method) found in your Mixpanel project's settings.
+            2. Service account credentials as a (username, password) tuple.
+            The older API key is no longer accessible in the Mixpanel UI and will be removed
+            in an upcoming release of mixpanel-python.
 
         .. versionadded:: 4.8.0
             The *api_secret* parameter.
+        .. versionadded:: 4.10.2
+            Support for service account authentication via api_secret tuple.
 
         To avoid accidentally recording invalid events, the Mixpanel API's
         ``track`` endpoint disallows events that occurred too long ago. This
@@ -196,17 +199,20 @@ class Mixpanel(object):
         :param str distinct_id1: The first distinct_id to merge.
         :param str distinct_id2: The second (other) distinct_id to merge.
         :param dict meta: overrides Mixpanel special properties
-        :param str api_secret: Your Mixpanel project's API secret.
+        :param str|tuple api_secret: either your Mixpanel project's API secret (str) for legacy auth,
+            or a tuple of (username, password) for service account authentication
 
         .. Important::
-            Mixpanel's ``merge`` HTTP endpoint requires the project API
-            secret found in your Mixpanel project's settings. The older API key is
-            no longer accessible in the Mixpanel UI, but will continue to work.
-            The api_key parameter will be removed in an upcoming release of
-            mixpanel-python.
+            Mixpanel's ``merge`` HTTP endpoint requires authentication. You can use either:
+            1. The project API secret (legacy method) found in your Mixpanel project's settings.
+            2. Service account credentials as a (username, password) tuple.
+            The older API key is no longer accessible in the Mixpanel UI and will be removed
+            in an upcoming release of mixpanel-python.
 
         .. versionadded:: 4.8.0
             The *api_secret* parameter.
+        .. versionadded:: 4.10.2
+            Support for service account authentication via api_secret tuple.
 
         See our online documentation for `more
         details
@@ -581,12 +587,15 @@ class Consumer(object):
         :type endpoint: "events" | "people" | "groups" | "imports"
         :param str json_message: a JSON message formatted for the endpoint
         :param str api_key: your Mixpanel project's API key
-        :param str api_secret: your Mixpanel project's API secret
+        :param str|tuple api_secret: either your Mixpanel project's API secret (str) for legacy auth,
+            or a tuple of (username, password) for service account authentication
         :raises MixpanelException: if the endpoint doesn't exist, the server is
             unreachable, or the message cannot be processed
 
         .. versionadded:: 4.8.0
             The *api_secret* parameter.
+        .. versionadded:: 4.10.2
+            Support for service account authentication via api_secret tuple.
         """
         if endpoint not in self._endpoints:
             raise MixpanelException('No such endpoint "{0}". Valid endpoints are one of {1}'.format(endpoint, self._endpoints.keys()))
@@ -609,7 +618,13 @@ class Consumer(object):
 
         basic_auth = None
         if api_secret is not None:
-            basic_auth = HTTPBasicAuth(api_secret, '')
+            if isinstance(api_secret, tuple):
+                # Service account authentication with username and password
+                username, password = api_secret
+                basic_auth = HTTPBasicAuth(username, password)
+            else:
+                # Legacy API secret authentication with blank password
+                basic_auth = HTTPBasicAuth(api_secret, '')
 
         try:
             response = self._session.post(
@@ -691,12 +706,17 @@ class BufferedConsumer(object):
         :type endpoint: "events" | "people" | "groups" | "imports"
         :param str json_message: a JSON message formatted for the endpoint
         :param str api_key: your Mixpanel project's API key
-        :param str api_secret: your Mixpanel project's API secret
+        :param str|tuple api_secret: either your Mixpanel project's API secret (str) for legacy auth,
+            or a tuple of (username, password) for service account authentication
         :raises MixpanelException: if the endpoint doesn't exist, the server is
             unreachable, or any buffered message cannot be processed
 
         .. versionadded:: 4.3.2
             The *api_key* parameter.
+        .. versionadded:: 4.8.0
+            The *api_secret* parameter.
+        .. versionadded:: 4.10.2
+            Support for service account authentication via api_secret tuple.
         """
         if endpoint not in self._buffers:
             raise MixpanelException('No such endpoint "{0}". Valid endpoints are one of {1}'.format(endpoint, self._buffers.keys()))

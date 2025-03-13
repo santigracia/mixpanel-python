@@ -1,3 +1,6 @@
+v4.10.2
+* Add support for service account authentication using username and password.
+
 v4.9.0
 * To reduce TLS cert friction, use requests rather than directly using urllib3.
     Reinstate TLS cert validation by default. (#103)

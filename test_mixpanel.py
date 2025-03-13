@@ -577,6 +577,20 @@ class TestConsumer:
         with pytest.raises(mixpanel.MixpanelException):
             self.consumer.send('unknown', '1')
 
+    def test_server_service_account_auth(self):
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.POST,
+                'https://api.mixpanel.com/track',
+                json={"status": 1, "error": None},
+                status=200,
+                match=[
+                    responses.urlencoded_params_matcher({"ip": "0", "verbose": "1", "data": '{"foo":"bar"}'}),
+                    responses.header_matcher({"Authorization": "Basic dXNlcm5hbWU6cGFzc3dvcmQ="})  # base64(username:password)
+                ]
+            )
+            self.consumer.send('events', '{"foo":"bar"}', api_secret=('username', 'password'))
+
 
 class TestBufferedConsumer:
     @classmethod
@@ -642,7 +656,12 @@ class TestBufferedConsumer:
         self.consumer.flush()
         assert self.log == [('imports', ['Event'], (None, 'ZZZZZZ'))]
 
-
+    def test_buffered_consumer_service_account_auth(self):
+        consumer = BufferedConsumer()
+        consumer.send('imports', '"Event"', api_secret=('username', 'password'))
+        assert len(self.log) == 0
+        consumer.flush()
+        assert self.log == [('imports', ['Event'], (None, ('username', 'password')))]
 
 
 class TestFunctional:
