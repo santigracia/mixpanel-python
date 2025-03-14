@@ -45,16 +45,6 @@ Typical usage usually looks like this::
     # sends an update to a user profile
     mp.people_set(DISTINCT_ID, {'$first_name' : 'Ilya', 'favorite pizza': 'margherita'})
 
-For endpoints that require authentication (like importing historical data), you can use either the legacy API secret or service account credentials::
-
-    # Using legacy API secret
-    mp.import_data(API_KEY, DISTINCT_ID, 'button clicked', TIMESTAMP, 
-                  {'color': 'blue'}, api_secret='your_api_secret')
-
-    # Using service account credentials
-    mp.import_data(API_KEY, DISTINCT_ID, 'button clicked', TIMESTAMP, 
-                  {'color': 'blue'}, api_secret=('username', 'password'))
-
 You can use an instance of the Mixpanel class for sending all of your events
 and people updates.
 
@@ -72,7 +62,7 @@ Authentication
 
 For endpoints that require authentication (like ``import_data`` and ``merge``), you have two options:
 
-1. Legacy API Secret: Use your project's API secret as a string. This method is being phased out but still works::
+1. Legacy API Secret: Use your project's API secret as a string.::
 
        mp.import_data(API_KEY, DISTINCT_ID, EVENT, TIMESTAMP, api_secret='your_api_secret')
 
